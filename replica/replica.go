@@ -3,8 +3,8 @@ package replica
 import (
 	"encoding/gob"
 	"fmt"
-	fhs "github.com/gitferry/bamboo/fasthostuff"
-	"github.com/gitferry/bamboo/lbft"
+	//fhs "github.com/gitferry/bamboo/fasthostuff"
+	//"github.com/gitferry/bamboo/lbft"
 	"time"
 
 	"go.uber.org/atomic"
@@ -12,7 +12,7 @@ import (
 	"github.com/gitferry/bamboo/blockchain"
 	"github.com/gitferry/bamboo/config"
 	"github.com/gitferry/bamboo/election"
-	"github.com/gitferry/bamboo/hotstuff"
+	//"github.com/gitferry/bamboo/hotstuff"
 	"github.com/gitferry/bamboo/identity"
 	"github.com/gitferry/bamboo/log"
 	"github.com/gitferry/bamboo/mempool"
@@ -20,7 +20,7 @@ import (
 	"github.com/gitferry/bamboo/node"
 	"github.com/gitferry/bamboo/pacemaker"
 	"github.com/gitferry/bamboo/streamlet"
-	"github.com/gitferry/bamboo/tchs"
+	//"github.com/gitferry/bamboo/tchs"
 	"github.com/gitferry/bamboo/types"
 )
 
@@ -92,18 +92,18 @@ func NewReplica(id identity.NodeID, alg string, isByz bool) *Replica {
 
 	// Is there a better way to reduce the number of parameters?
 	switch alg {
-	case "hotstuff":
-		r.Safety = hotstuff.NewHotStuff(r.Node, r.pm, r.Election, r.committedBlocks, r.forkedBlocks)
-	case "tchs":
-		r.Safety = tchs.NewTchs(r.Node, r.pm, r.Election, r.committedBlocks, r.forkedBlocks)
+	//case "hotstuff":
+	//	r.Safety = hotstuff.NewHotStuff(r.Node, r.pm, r.Election, r.committedBlocks, r.forkedBlocks)
+	//case "tchs":
+	//	r.Safety = tchs.NewTchs(r.Node, r.pm, r.Election, r.committedBlocks, r.forkedBlocks)
 	case "streamlet":
 		r.Safety = streamlet.NewStreamlet(r.Node, r.pm, r.Election, r.committedBlocks, r.forkedBlocks)
-	case "lbft":
-		r.Safety = lbft.NewLbft(r.Node, r.pm, r.Election, r.committedBlocks, r.forkedBlocks)
-	case "fasthotstuff":
-		r.Safety = fhs.NewFhs(r.Node, r.pm, r.Election, r.committedBlocks, r.forkedBlocks)
+	//case "lbft":
+	//	r.Safety = lbft.NewLbft(r.Node, r.pm, r.Election, r.committedBlocks, r.forkedBlocks)
+	//case "fasthotstuff":
+	//	r.Safety = fhs.NewFhs(r.Node, r.pm, r.Election, r.committedBlocks, r.forkedBlocks)
 	default:
-		r.Safety = hotstuff.NewHotStuff(r.Node, r.pm, r.Election, r.committedBlocks, r.forkedBlocks)
+		r.Safety = streamlet.NewStreamlet(r.Node, r.pm, r.Election, r.committedBlocks, r.forkedBlocks)
 	}
 	return r
 }
@@ -218,27 +218,36 @@ func (r *Replica) ListenLocalEvent() {
 	r.timer = time.NewTimer(r.pm.GetTimerForView())
 	for {
 		r.timer.Reset(r.pm.GetTimerForView())
-	L:
-		for {
-			select {
-			case view := <-r.pm.EnteringViewEvent():
-				if view >= 2 {
-					r.totalVoteTime += time.Now().Sub(r.voteStart)
-				}
-				// measure round time
-				now := time.Now()
-				lasts := now.Sub(r.lastViewTime)
-				r.totalRoundTime += lasts
-				r.roundNo++
-				r.lastViewTime = now
-				r.eventChan <- view
-				log.Debugf("[%v] the last view lasts %v milliseconds, current view: %v", r.ID(), lasts.Milliseconds(), view)
-				break L
-			case <-r.timer.C:
-				r.Safety.ProcessLocalTmo(r.pm.GetCurView())
-				break L
-			}
-		}
+		//L:
+		//	for {
+		//		select {
+		//		case view := <-r.pm.EnteringViewEvent():
+		//			if view >= 2 {
+		//				r.totalVoteTime += time.Now().Sub(r.voteStart)
+		//			}
+		//			// measure round time
+		//			now := time.Now()
+		//			lasts := now.Sub(r.lastViewTime)
+		//			r.totalRoundTime += lasts
+		//			r.roundNo++
+		//			r.lastViewTime = now
+		//			r.eventChan <- view
+		//			log.Debugf("[%v] the last view lasts %v milliseconds, current view: %v", r.ID(), lasts.Milliseconds(), view)
+		//			break L
+		//		case <-r.timer.C:
+		//			r.Safety.ProcessLocalTmo(r.pm.GetCurView())
+		//			break L
+		//		}
+		//	}
+		now := time.Now()
+		lasts := now.Sub(r.lastViewTime)
+		r.totalRoundTime += lasts
+		r.roundNo++
+		r.lastViewTime = now
+		log.Debugf("[%v] the last view lasts %v milliseconds, current view: %v", r.ID(), lasts.Milliseconds(), r.pm.GetCurView())
+		r.pm.AdvanceView(r.pm.GetCurView())
+		r.eventChan <- r.pm.EnteringViewEvent()
+		<-r.timer.C
 	}
 }
 
