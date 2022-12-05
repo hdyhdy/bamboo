@@ -4,6 +4,7 @@ import (
 	"math/rand"
 	"sync"
 	"time"
+	"math"
 
 	"github.com/gitferry/bamboo/config"
 	"github.com/gitferry/bamboo/log"
@@ -55,6 +56,7 @@ func NewBenchmark(db DB) *Benchmark {
 }
 
 // Run starts the main logic of benchmarking
+// Run starts the main logic of benchmarking
 func (b *Benchmark) Run() {
 	var genCount, sendCount, confirmCount uint64
 
@@ -100,31 +102,44 @@ func (b *Benchmark) Run() {
 
 	b.db.Stop()
 	close(keys)
+
 	stat := Statistic(b.latency)
 	confirmCount = uint64(len(b.latency))
 	log.Infof("Concurrency = %d", b.Concurrency)
 	log.Infof("Benchmark Time = %v\n", t)
-	log.Infof("Throughput = %f\n", float64(len(b.latency))/t.Seconds())
+	log.Infof("Throughput = %f B/s\n", float64(len(b.latency))*float64(config.GetConfig().PayloadSize)/t.Seconds())
 	log.Infof("genCount: %d, sendCount: %d, confirmCount: %d", genCount, sendCount, confirmCount)
 	log.Info(stat)
 
-	//stat.WriteFile("latency")
-	//b.History.WriteFile("history")
+	stat.WriteFile("latency")
+	b.History.WriteFile("history")
 }
 
 func (b *Benchmark) worker(keys <-chan int, result chan<- time.Duration) {
-	//var s time.Time
-	//var e time.Time
-	//var v int
+	var s time.Time
+	var e time.Time
+	var err error
 	//var err error
 	for k := range keys {
-		//op := new(operation)
-		//v = rand.Int()
+		op := new(operation)
+
 		//s = time.Now()
 		value := make([]byte, config.GetConfig().PayloadSize)
 		rand.Read(value)
 		//rand.Read(value)
-		_ = b.db.Write(k, value)
+		s = time.Now()
+		err = b.db.Write(k, value)
+		e = time.Now()
+		op.input = value
+		op.start = s.Sub(b.startTime).Nanoseconds()
+		if err == nil {
+			op.end = e.Sub(b.startTime).Nanoseconds()
+			result <- e.Sub(s)
+		} else {
+			op.end = math.MaxInt64
+			log.Error(err)
+		}
+		b.History.AddOperation(k, op)
 		//res, err := strconv.Atoi(r)
 		//log.Debugf("latency is %v", time.Duration(res)*time.Nanosecond)
 		//e = time.Now()
