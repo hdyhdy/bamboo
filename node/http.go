@@ -65,7 +65,7 @@ func (n *node) handleRoot(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
 	v, _ := ioutil.ReadAll(r.Body)
-	//log.Debugf("[%v] payload is %x", n.id, v)
+	log.Debugf("[%v] payload is %x", n.id, v)
 	req.Command.Value = v
 	req.C = ppFree.Get().(chan message.TransactionReply)
 	req.NodeID = n.id
