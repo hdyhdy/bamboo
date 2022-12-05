@@ -223,7 +223,7 @@ func (sl *Streamlet) processCertificate(qc *blockchain.QC) {
 		log.Debugf("[%v] cannot notarize the block, %x: %w", sl.ID(), qc.BlockID, err)
 		return
 	}
-	sl.pm.AdvanceView(qc.View)
+	//sl.pm.AdvanceView(qc.View)
 	if qc.View < 3 {
 		return
 	}
