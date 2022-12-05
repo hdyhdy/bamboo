@@ -22,31 +22,31 @@ type Config struct {
 	Addrs     map[identity.NodeID]string `json:"address"`      // address for node communication
 	HTTPAddrs map[identity.NodeID]string `json:"http_address"` // address for client server communication
 
-	Policy    string  `json:"policy"`    // leader change policy {consecutive, majority}
+	Policy    string  `json:"policy"`    // leader change policy {consecutive, majority}（似乎没用上）
 	Threshold float64 `json:"threshold"` // threshold for policy in WPaxos {n consecutive or time interval in ms}
 
-	Thrifty        bool            `json:"thrifty"`          // only send messages to a quorum
+	Thrifty        bool            `json:"thrifty"`          // only send messages to a quorum（似乎没用上）
 	BufferSize     int             `json:"buffer_size"`      // buffer size for maps
 	ChanBufferSize int             `json:"chan_buffer_size"` // buffer size for channels
 	MultiVersion   bool            `json:"multiversion"`     // create multi-version database
-	Timeout        int             `json:"timeout"`
-	ByzNo          int             `json:"byzNo"`
-	BSize          int             `json:"bsize"`
-	Fixed          bool            `json:"fixed"`
-	Benchmark      Bconfig         `json:"benchmark"` // benchmark configuration
-	Delta          int             `json:"delta"`     // timeout, seconds
-	Pprof          bool            `json:"pprof"`
-	MaxRound       int             `json:"maxRound"`
-	Strategy       string          `json:"strategy"`
-	PayloadSize    int             `json:"payload_size"`
-	Master         identity.NodeID `json:"master"`
-	Delay          int             `json:"delay"` // transmission delay in ms
-	DErr           int             `json:"derr"`  // the err taken into delays
-	MemSize        int             `json:"memsize"`
-	Slow           int             `json:"slow"`
-	Crash          int             `json:"crash"`
+	Timeout        int             `json:"timeout"`          //一个view的超时切换时间
+	ByzNo          int             `json:"byzNo"`            //拜占庭数量，决定哪些节点是拜占庭
+	BSize          int             `json:"bsize"`            //决定区块的负载的数量
+	Fixed          bool            `json:"fixed"`            //似乎无
+	Benchmark      Bconfig         `json:"benchmark"`        // benchmark configuration
+	Delta          int             `json:"delta"`            // timeout, seconds（似乎无用）
+	Pprof          bool            `json:"pprof"`            //pprof地址（用不上似乎）
+	MaxRound       int             `json:"maxRound"`         //用不上似乎
+	Strategy       string          `json:"strategy"`         //作恶策略，有分叉以及沉默攻击
+	PayloadSize    int             `json:"payload_size"`     //负载的大小（byte）
+	Master         identity.NodeID `json:"master"`           //主节点的ID，为0就是轮流切换
+	Delay          int             `json:"delay"`            // transmission delay in ms（似乎没用到）
+	DErr           int             `json:"derr"`             // the err taken into delays（似乎没用到）
+	MemSize        int             `json:"memsize"`          //交易池大小
+	Slow           int             `json:"slow"`             //拜占庭随机延迟的参数（基本用不到）
+	Crash          int             `json:"crash"`            //拜占庭随机延迟的参数（基本用不到）
 
-	hasher string
+	hasher string //哈希算法和签名算法
 	signer string
 
 	// for future implementation
@@ -64,19 +64,19 @@ type Config struct {
 
 // Bconfig holds all benchmark configuration
 type Bconfig struct {
-	T            int    // total number of running time in seconds
-	N            int    // total number of requests
-	K            int    // key sapce
-	Throttle     int    // requests per second throttle, unused if 0
-	Concurrency  int    // number of simulated clients
-	Distribution string // distribution
+	T            int    // total number of running time in seconds 模拟时长
+	N            int    // total number of requests //请求的数量，如果T不设置就设置他
+	K            int    // key sapce //key的范围
+	Throttle     int    // requests per second throttle, unused if 0 //发送请求的速率
+	Concurrency  int    // number of simulated clients //模拟客户端数量
+	Distribution string // distribution //
 	// rounds       int    // repeat in many rounds sequentially
 
 	// conflict distribution
 	Conflicts int // percentage of conflicting keys
-	Min       int // min key
+	Min       int // min key //以k生成的随机数加min得出新key
 
-	// normal distribution
+	// normal distribution（似乎没用上）
 	Mu    float64 // mu of normal distribution
 	Sigma float64 // sigma of normal distribution
 	Move  bool    // moving average (mu) of normal distribution
